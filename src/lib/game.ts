@@ -93,11 +93,11 @@ export default class Game {
 
 	// Get all available board positions
 	#getAvailableSlots(board: Board, isMaximizing: boolean): Board_idx[] {
-		return board
+        return board
             .map((val, idx) => val === ' ' ? idx : -1)
-			.filter((val): val is Board_idx => val !== -1)
-.sort((a, b) => isMaximizing ? b - a : a - b);
-	}
+            .filter((val): val is Board_idx => val !== -1)
+            .sort((a, b) => isMaximizing ? b - a : a - b);
+    }
 
 	// Minimax algorithm
 	#minimax(
@@ -175,11 +175,11 @@ export default class Game {
 		}
 
 		// get the indexes with highest possible score, if multiple scores (highest) are equal then choose ranomy
-		
+
 		console.log(MOVES)
-        
-        const HIGH_SCORE = Math.max(...MOVES.map(move_obj => move_obj.score))
-        const HIGHEST_SCORES = MOVES.filter(
+
+		const HIGH_SCORE = Math.max(...MOVES.map(move_obj => move_obj.score))
+		const HIGHEST_SCORES = MOVES.filter(
 			move_obj => move_obj.score == HIGH_SCORE
 		).map(move_obj => move_obj.move)
 
