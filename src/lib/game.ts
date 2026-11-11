@@ -92,14 +92,21 @@ export default class Game {
 	}
 
 	// Get all available board positions
-	#getAvailableSlots(board: Board): Board_idx[] {
+	#getAvailableSlots(board: Board, isMaximizing: boolean): Board_idx[] {
 		return board
 			.map((val, idx) => (val === ' ' ? idx : -1))
 			.filter((val): val is Board_idx => val !== -1)
+.sort((a, b) => isMaximizing ? b - a : a - b);
 	}
 
 	// Minimax algorithm
-	#minimax(board: Board, depth: number, maximizingPlayer: boolean): number {
+	#minimax(
+		board: Board,
+		depth: number,
+		alpha: number,
+		beta: number,
+		maximizingPlayer: boolean
+	): number {
 		// Terminal state evaluation
 		if (this.#hasWinner(board, 'o')) {
 			return 10 - depth
@@ -117,12 +124,18 @@ export default class Game {
 		let bestScore = maximizingPlayer ? -Infinity : Infinity
 
 		// Explore all available moves
-		for (const SLOT_IDX of this.#getAvailableSlots(board)) {
+		for (const SLOT_IDX of this.#getAvailableSlots(board, maximizingPlayer)) {
 			// AI maximizes, human minimizes
 			board[SLOT_IDX] = maximizingPlayer ? 'o' : 'x'
 
 			// Recursively evaluate the next move
-			const score = this.#minimax(board, depth + 1, !maximizingPlayer)
+			const score = this.#minimax(
+				board,
+				depth + 1,
+				alpha,
+				beta,
+				!maximizingPlayer
+			)
 
 			// Undo the simulated move
 			board[SLOT_IDX] = ' '
@@ -131,6 +144,14 @@ export default class Game {
 			bestScore = maximizingPlayer
 				? Math.max(bestScore, score)
 				: Math.min(bestScore, score)
+
+			maximizingPlayer
+				? (alpha = Math.max(alpha, score))
+				: (beta = Math.min(beta, score))
+
+            if (beta <= alpha) {
+                break
+            }
 		}
 
 		return bestScore
@@ -140,12 +161,12 @@ export default class Game {
 	#aiStrike(board: Board): Board_idx {
 		const MOVES = [] as Move[]
 
-		for (const SLOT_IDX of this.#getAvailableSlots(board)) {
+		for (const SLOT_IDX of this.#getAvailableSlots(board, true)) {
 			// Simulate AI move
 			board[SLOT_IDX] = 'o'
 
 			// Evaluate the resulting position
-			const score = this.#minimax(board, 0, false)
+			const score = this.#minimax(board, 0, -Infinity, Infinity, false)
 
 			// Undo simulated move
 			board[SLOT_IDX] = ' '
