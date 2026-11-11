@@ -176,15 +176,16 @@ export default class Game {
 
 		// get the indexes with highest possible score, if multiple scores (highest) are equal then choose ranomy
 		
-        console.log(MOVES);
-        
+		console.log(MOVES)
         
         const HIGH_SCORE = Math.max(...MOVES.map(move_obj => move_obj.score))
         const HIGHEST_SCORES = MOVES.filter(
 			move_obj => move_obj.score == HIGH_SCORE
 		).map(move_obj => move_obj.move)
 
-		return HIGHEST_SCORES[Math.floor(Math.random() * (HIGHEST_SCORES.length - 1))] as Board_idx
+		return HIGHEST_SCORES[
+			Math.floor(Math.random() * HIGHEST_SCORES.length)
+		] as Board_idx
 	}
 
 	// Public method: Human makes a move
