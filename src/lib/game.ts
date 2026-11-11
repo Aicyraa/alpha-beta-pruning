@@ -1,223 +1,210 @@
-
 interface Player {
-    score: number
-    player: 'human' | 'ai'
-    symbol: 'x' | 'o'
+	score: number
+	player: 'human' | 'ai'
+	symbol: 'x' | 'o'
 }
 
 type Winner =
-    | { winner: Player; gameStatus: 'winner' }
-    | { winner: null; gameStatus: 'tie' | 'running' }
+	| { winner: Player; gameStatus: 'winner' }
+	| { winner: null; gameStatus: 'tie' | 'running' }
 
 type Board_idx = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
 type Cell = 'x' | 'o' | ' '
 
-type TupleOf<
-    T,
-    N extends number,
-    R extends T[] = []
-> = R['length'] extends N
-    ? R
-    : TupleOf<T, N, [...R, T]>
+type TupleOf<T, N extends number, R extends T[] = []> = R['length'] extends N
+	? R
+	: TupleOf<T, N, [...R, T]>
 
 type Board = TupleOf<Cell, 9>
 
+interface Move {
+	move: Board_idx
+	score: number
+}
+
 export default class Game {
-    human = { score: 0, player: 'human', symbol: 'x' } as const
-    ai = { score: 0, player: 'ai', symbol: 'o' } as const
+	human = { score: 0, player: 'human', symbol: 'x' } as const
+	ai = { score: 0, player: 'ai', symbol: 'o' } as const
 
-    #WINNING_PATTERN: number[][] = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
-    ]
+	#WINNING_PATTERN: number[][] = [
+		[0, 1, 2],
+		[3, 4, 5],
+		[6, 7, 8],
+		[0, 3, 6],
+		[1, 4, 7],
+		[2, 5, 8],
+		[0, 4, 8],
+		[2, 4, 6]
+	]
 
-    board: Board = Array(9).fill(' ') as Board
+	board: Board = Array(9).fill(' ') as Board
 
-    #printBoard() {
-        console.log(this.board)
-    }
+	#printBoard() {
+		console.log(this.board)
+	}
 
-    // Check whether a player has won
-    #hasWinner(board: Board, symbol: 'x' | 'o'): boolean {
-        return this.#WINNING_PATTERN.some(pattern => {
-            const [x, y, z] = pattern 
+	// Check whether a player has won
+	#hasWinner(board: Board, symbol: 'x' | 'o'): boolean {
+		return this.#WINNING_PATTERN.some(pattern => {
+			const [x, y, z] = pattern
 
-            return (
-                board[x as Board_idx] === symbol &&
-                board[y as Board_idx] === symbol &&
-                board[z as Board_idx] === symbol
-            )
-        })
-    }
+			return (
+				board[x as Board_idx] === symbol &&
+				board[y as Board_idx] === symbol &&
+				board[z as Board_idx] === symbol
+			)
+		})
+	}
 
-    // Check whether the board is full
-    #isTie(board: Board): boolean {
-        return board.every(slot => slot !== ' ')
-    }
+	// Check whether the board is full
+	#isTie(board: Board): boolean {
+		return board.every(slot => slot !== ' ')
+	}
 
-    // Determine the current game status
-    #checkWinner(): Winner {
-        if (this.#hasWinner(this.board, 'x')) {
-            return { winner: this.human, gameStatus: 'winner' }
-        }
+	// Determine the current game status
+	#checkWinner(): Winner {
+		if (this.#hasWinner(this.board, 'x')) {
+			return { winner: this.human, gameStatus: 'winner' }
+		}
 
-        if (this.#hasWinner(this.board, 'o')) {
-            return { winner: this.ai, gameStatus: 'winner' }
-        }
+		if (this.#hasWinner(this.board, 'o')) {
+			return { winner: this.ai, gameStatus: 'winner' }
+		}
 
-        if (this.#isTie(this.board)) {
-            return { winner: null, gameStatus: 'tie' }
-        }
+		if (this.#isTie(this.board)) {
+			return { winner: null, gameStatus: 'tie' }
+		}
 
-        return { winner: null, gameStatus: 'running' }
-    }
+		return { winner: null, gameStatus: 'running' }
+	}
 
-    // Place a symbol on the board
-    #setBoardValue(idx: Board_idx, symbol: 'x' | 'o'): Winner {
-        if (this.board[idx] !== ' ') {
-            console.warn('Slot is not empty!')
-            throw new Error('Occupied')
-        }
+	// Place a symbol on the board
+	#setBoardValue(idx: Board_idx, symbol: 'x' | 'o'): Winner {
+		if (this.board[idx] !== ' ') {
+			console.warn('Slot is not empty!')
+			throw new Error('Occupied')
+		}
 
-        this.board[idx] = symbol
+		this.board[idx] = symbol
 
-        return this.#checkWinner()
-    }
+		return this.#checkWinner()
+	}
 
-    // Get all available board positions
-    #getAvailableSlots(board: Board): Board_idx[] {
-        return board
-            .map((val, idx) => val === ' ' ? idx : -1)
-            .filter((val): val is Board_idx => val !== -1)
-    }
+	// Get all available board positions
+	#getAvailableSlots(board: Board): Board_idx[] {
+		return board
+			.map((val, idx) => (val === ' ' ? idx : -1))
+			.filter((val): val is Board_idx => val !== -1)
+	}
 
-    // Minimax algorithm
-    #minimax(
-        board: Board,
-        depth: number,
-        maximizingPlayer: boolean
-    ): number {
+	// Minimax algorithm
+	#minimax(board: Board, depth: number, maximizingPlayer: boolean): number {
+		// Terminal state evaluation
+		if (this.#hasWinner(board, 'o')) {
+			return 10 - depth
+		}
 
-        // Terminal state evaluation
-        if (this.#hasWinner(board, 'o')) {
-            return 10 - depth
-        }
+		if (this.#hasWinner(board, 'x')) {
+			return depth - 10
+		}
 
-        if (this.#hasWinner(board, 'x')) {
-            return depth - 10
-        }
+		if (this.#isTie(board)) {
+			return 0
+		}
 
-        if (this.#isTie(board)) {
-            return 0
-        }
+		// Determine which player is making a move
+		let bestScore = maximizingPlayer ? -Infinity : Infinity
 
-        // Determine which player is making a move
-        let bestScore = maximizingPlayer
-            ? -Infinity
-            : Infinity
+		// Explore all available moves
+		for (const SLOT_IDX of this.#getAvailableSlots(board)) {
+			// AI maximizes, human minimizes
+			board[SLOT_IDX] = maximizingPlayer ? 'o' : 'x'
 
-        // Explore all available moves
-        for (const SLOT_IDX of this.#getAvailableSlots(board)) {
+			// Recursively evaluate the next move
+			const score = this.#minimax(board, depth + 1, !maximizingPlayer)
 
-            // AI maximizes, human minimizes
-            board[SLOT_IDX] = maximizingPlayer ? 'o' : 'x'
+			// Undo the simulated move
+			board[SLOT_IDX] = ' '
 
-            // Recursively evaluate the next move
-            const score = this.#minimax(
-                board,
-                depth + 1,
-                !maximizingPlayer
-            )
+			// Select the best score
+			bestScore = maximizingPlayer
+				? Math.max(bestScore, score)
+				: Math.min(bestScore, score)
+		}
 
-            // Undo the simulated move
-            board[SLOT_IDX] = ' '
+		return bestScore
+	}
 
-            // Select the best score
-            bestScore = maximizingPlayer
-                ? Math.max(bestScore, score)
-                : Math.min(bestScore, score)
-        }
+	// AI chooses its best move
+	#aiStrike(board: Board): Board_idx {
+		const MOVES = [] as Move[]
 
-        return bestScore
-    }
+		for (const SLOT_IDX of this.#getAvailableSlots(board)) {
+			// Simulate AI move
+			board[SLOT_IDX] = 'o'
 
-    // AI chooses its best move
-    #ai_strike(board: Board): Board_idx {
-        let bestScore = -Infinity
-        let bestMove: Board_idx = 0
+			// Evaluate the resulting position
+			const score = this.#minimax(board, 0, false)
 
-        for (const SLOT_IDX of this.#getAvailableSlots(board)) {
+			// Undo simulated move
+			board[SLOT_IDX] = ' '
 
-            // Simulate AI move
-            board[SLOT_IDX] = 'o'
+			MOVES.push({ move: SLOT_IDX, score: score })
+		}
 
-            // Evaluate the resulting position
-            const score = this.#minimax(board, 0, false)
+		// get the indexes with highest possible score, if multiple scores (highest) are equal then choose ranomy
+		
+        console.log(MOVES);
+        
+        
+        const HIGH_SCORE = Math.max(...MOVES.map(move_obj => move_obj.score))
+        const HIGHEST_SCORES = MOVES.filter(
+			move_obj => move_obj.score == HIGH_SCORE
+		).map(move_obj => move_obj.move)
 
-            // Undo simulated move
-            board[SLOT_IDX] = ' '
+		return HIGHEST_SCORES[Math.floor(Math.random() * (HIGHEST_SCORES.length - 1))] as Board_idx
+	}
 
-            console.log({
-                move: SLOT_IDX,
-                score
-            })
+	// Public method: Human makes a move
+	strike(idx: Board_idx): Winner | Error {
+		try {
+			// Human move
+			const humanResult = this.#setBoardValue(idx, 'x')
 
-            if (score > bestScore) {
-                bestScore = score
-                bestMove = SLOT_IDX
-            }
-        }
+			this.#printBoard()
 
-        return bestMove
-    }
+			// Stop if human wins or game ties
+			if (humanResult.gameStatus !== 'running') {
+				return humanResult
+			}
 
-    // Public method: Human makes a move
-    strike(idx: Board_idx): Winner | Error {
-        try {
-            // Human move
-            const humanResult = this.#setBoardValue(idx, 'x')
+			// AI move
+			const aiMove = this.#aiStrike(this.board)
 
-            this.#printBoard()
+			const aiResult = this.#setBoardValue(aiMove, 'o')
 
-            // Stop if human wins or game ties
-            if (humanResult.gameStatus !== 'running') {
-                return humanResult
-            }
+			console.log('------------------------------')
 
-            // AI move
-            const aiMove = this.#ai_strike(this.board)
+			this.#printBoard()
 
-            const aiResult = this.#setBoardValue(aiMove, 'o')
+			return aiResult
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				return e
+			}
 
-            console.log('------------------------------')
+			return new Error('Unknown game error')
+		}
+	}
 
-            this.#printBoard()
+	// Public method: Get current game status
+	getStatus(): Winner {
+		return this.#checkWinner()
+	}
 
-            return aiResult
-
-        } catch (e: unknown) {
-            if (e instanceof Error) {
-                return e
-            }
-
-            return new Error('Unknown game error')
-        }
-    }
-
-    // Public method: Get current game status
-    getStatus(): Winner {
-        return this.#checkWinner()
-    }
-
-    // Public method: Reset the board
-    reset(): void {
-        this.board = Array(9).fill(' ') as Board
-    }
+	// Public method: Reset the board
+	reset(): void {
+		this.board = Array(9).fill(' ') as Board
+	}
 }
