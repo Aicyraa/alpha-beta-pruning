@@ -94,7 +94,7 @@ export default class Game {
 	// Get all available board positions
 	#getAvailableSlots(board: Board, isMaximizing: boolean): Board_idx[] {
 		return board
-			.map((val, idx) => (val === ' ' ? idx : -1))
+            .map((val, idx) => val === ' ' ? idx : -1)
 			.filter((val): val is Board_idx => val !== -1)
 .sort((a, b) => isMaximizing ? b - a : a - b);
 	}
